@@ -1,0 +1,20 @@
+# Python
+# Ignora caches de bytecode do Python
+__pycache__/
+
+# Ignora ambientes virtuais criados pelo venv
+.venv/
+venv/
+
+# Ignora caches do pytest
+.pytest_cache/
+
+# Ignora caches da IDE (PyCharm, IntelliJ)
+.idea/
+
+# Ignora caches de arquivos de log do Python
+*.log
+
+# Arquivos gerados pelo sistema operacional
+.DS_Store
+Thumbs.db
