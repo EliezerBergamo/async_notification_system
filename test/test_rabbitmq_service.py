@@ -1,14 +1,16 @@
 """
-Módulo de testes unitários para a API de notificação.
+Unit testing module for the notification API.
 
-Este arquivo contém testes para garantir que o endpoint de notificação
-se comporte como esperado, focando em sua interação com o serviço
-externo (RabbitMQ) de forma isolada, sem a necessidade de uma
-conexão de rede real.
+This file contains tests to ensure that the notification endpoint
+behaves as expected, focusing on its interaction with the external service
+(RabbitMQ) in isolation, without the need for an
+actual network connection.
 
-As fixtures do módulo `conftest.py` são usadas para simular o
-comportamento do serviço RabbitMQ, garantindo que a lógica de
-negócio seja testada de forma eficiente e confiável.
+The fixtures in the `conftest.py` module are used to simulate the
+behavior of the RabbitMQ service, ensuring that the business logic
+is tested efficiently and reliably.
+
+Translated with DeepL.com (free version)
 """
 
 import pytest
@@ -17,29 +19,29 @@ from fastapi.testclient import TestClient
 from src.main import app, service_rabbitmq
 from .conftest import service_rabbitmq_mock
 
-API_URL = "/api/notificar"
+API_URL = "/api/notify"
 
 
 @pytest.mark.asyncio
 async def test_publish_message_is_called_with_correct_arguments(service_rabbitmq_mock):
     """
-    Testa se o método `publish_message` do serviço RabbitMQ é chamado
-    com os argumentos corretos.
+    Tests whether the RabbitMQ service's `publish_message` method is called
+    with the correct arguments.
 
-    A `fixture` `service_rabbitmq_mock` é injetada para simular o
-    serviço real. A lógica do teste é a seguinte:
-    1. Substitui a instância real do serviço pela mock.
-    2. Envia uma requisição POST para o endpoint da API.
-    3. Verifica se o status de resposta é 202 (Accepted).
-    4. Afirma que `publish_message` foi chamado exatamente uma vez.
-    5. Extrai os argumentos da chamada e os valida.
-    6. Valida o nome da fila e o conteúdo da mensagem publicada.
+    The `service_rabbitmq_mock` fixture is injected to simulate the
+    actual service. The test logic is as follows:
+    1. Replaces the actual service instance with the mock.
+    2. Sends a POST request to the API endpoint.
+    3. Checks that the response status is 202 (Accepted).
+    4. Asserts that `publish_message` was called exactly once.
+    5. Extracts the arguments from the call and validates them.
+    6. Validates the queue name and the content of the published message.
     """
     service_rabbitmq.publish_message = service_rabbitmq_mock.publish_message
 
     test_payload = {
-        "conteudoMensagem": "Olá, esta é uma mensagem de teste.",
-        "tipoNotificacao": "EMAIL"
+        "contentMessage": "Hello, this is a test message.",
+        "typeNotification": "EMAIL"
     }
 
     client = TestClient(app)
@@ -54,9 +56,9 @@ async def test_publish_message_is_called_with_correct_arguments(service_rabbitmq
 
     published_message_data = json.loads(call_args[1])
 
-    assert call_args[0] == "fila.notificacao.entrada.ELIEZER"
-    assert published_message_data['conteudoMensagem'] == "Olá, esta é uma mensagem de teste."
-    assert published_message_data['tipoNotificacao'] == "EMAIL"
+    assert call_args[0] == "fila.notification.entry.NAME"
+    assert published_message_data['contentMessage'] == "Hello, this is a test message."
+    assert published_message_data['typeNotification'] == "EMAIL"
 
     assert 'traceId' in published_message_data
-    assert 'mensagemId' in published_message_data
+    assert 'messageId' in published_message_data

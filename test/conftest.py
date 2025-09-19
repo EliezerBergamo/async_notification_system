@@ -1,10 +1,10 @@
 """
-Módulo de fixtures compartilhadas para os testes do pytest.
+Shared fixtures module for pytest tests.
 
-Este arquivo é lido automaticamente pelo pytest e as fixtures definidas aqui
-podem ser usadas em qualquer teste na mesma pasta ou subpastas.
-Ele centraliza a configuração de objetos simulados (mocks) para garantir
-consistência e reutilização nos testes.
+This file is automatically read by pytest, and the fixtures defined here
+can be used in any test in the same folder or subfolders.
+It centralizes the configuration of mock objects to ensure
+consistency and reuse in tests.
 """
 
 import pytest
@@ -13,17 +13,17 @@ from unittest.mock import AsyncMock, MagicMock
 @pytest.fixture
 def service_rabbitmq_mock():
     """
-    Cria e retorna um mock para a classe ServiceRabbitMQ.
+    Creates and returns a mock for the ServiceRabbitMQ class.
 
-    Esta fixture simula o comportamento da classe real `ServiceRabbitMQ` sem
-    estabelecer uma conexão de rede. Isso permite testar a lógica da aplicação
-    de forma isolada e rápida.
+    This fixture simulates the behavior of the actual `ServiceRabbitMQ` class without
+    establishing a network connection. This allows you to test the application logic
+    in isolation and quickly.
 
-    Os métodos `connect`, `close` e `publish_message` são substituídos por
-    `AsyncMock`, que permite verificar se foram chamados e com quais argumentos.
+    The `connect`, `close`, and `publish_message` methods are replaced by
+    `AsyncMock`, which allows you to verify that they were called and with which arguments.
 
     Returns:
-        MagicMock: Um objeto mock que simula a classe ServiceRabbitMQ.
+        MagicMock: A mock object that simulates the ServiceRabbitMQ class.
     """
 
     mock_service = MagicMock()

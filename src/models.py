@@ -1,60 +1,61 @@
 """
-Módulo de modelos de dados para a API de notificação.
+Data model module for the notification API.
 
-Define os modelos Pydantic (BaseModel) para validação e serialização
-dos dados, garantindo que o formato das requisições e a estrutura
-do estado da notificação estejam corretos.
+Defines the Pydantic models (BaseModel) for validation and serialization
+of data, ensuring that the format of requests and the structure
+of the notification status are correct.
 """
 
 import uuid
 from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
-class NotificacaoPayload(BaseModel):
+class NotificationPayload(BaseModel):
     """
-    Modelo para a validação do payload da requisição de notificação.
+    Template for validating the notification request payload.
 
-    Define a estrutura e as regras de validação para os dados de entrada
-    recebidos pelo endpoint POST /api/notificar.
+    Defines the structure and validation rules for input data
+    received by the POST /api/notify endpoint.
 
-    Atributos:
-        mensagemId (Optional[uuid.UUID]): Identificador único da mensagem.
-            Gerado automaticamente se não for fornecido.
-        conteudoMensagem (str): O conteúdo textual da notificação.
-        tipoNotificacao (str): O tipo da notificação (e.g., "EMAIL", "SMS", "PUSH").
-            A validação garante que o valor seja um dos tipos permitidos.
+    Attributes:
+        messageId (Optional[uuid.UUID]): Unique message identifier.
+            Automatically generated if not provided.
+        contentMessage (str): The textual content of the notification.
+        typeNotification (str): The type of notification (e.g., “EMAIL,” “SMS,” “PUSH”).
+            Validation ensures that the value is one of the allowed types.
+
     """
-    mensagemId: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4)
-    conteudoMensagem: str
-    tipoNotificacao: str
+    messageId: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4)
+    contentMessage: str
+    typeNotification: str
 
-    @field_validator('tipoNotificacao')
-    def validar_tipo_notificacao(cls, v):
+    @field_validator('typeNotification')
+    def validate_notification_type(cls, v):
         """
-            Valida que o 'tipoNotificacao' seja um dos valores permitidos.
-            """
+        Validates that ‘typeNotification’ is one of the allowed values.
+        """
         allowed_types = {"EMAIL", "SMS", "PUSH"}
         if v.upper() not in allowed_types:
-            raise ValueError(f"Tipo inválido."
-                             f"Use um desses: {', '.join(allowed_types)}")
+            raise ValueError(f"Invalid type."
+                             f"Use one of these: {', '.join(allowed_types)}")
         return v.upper()
 
-class NotificacaoStatus(BaseModel):
+class NotificationStatus(BaseModel):
     """
-    Modelo para o status da notificação armazenado em memória.
+    Template for the notification status stored in memory.
 
-    Define a estrutura dos dados que representam o estado atual de uma
-    notificação no sistema, utilizado para consulta pelo endpoint GET.
+    Defines the structure of the data representing the current status of a
+    notification in the system, used for querying by the GET endpoint.
 
-    Atributos:
-        traceId (uuid.UUID): Identificador único de rastreamento para toda a vida da notificação.
-        mensagemId (uuid.UUID): Identificador original da mensagem.
-        conteudoMensagem (str): O conteúdo da notificação.
-        tipoNotificacao (str): O tipo da notificação.
-        status (str): O status atual da notificação no pipeline.
+    Attributes:
+        traceId (uuid.UUID): Unique tracking identifier for the entire life of the notification.
+        messageId (uuid.UUID): Original message identifier.
+        contentMessage (str): The content of the notification.
+        typeNotification (str): The type of notification.
+        status (str): The current status of the notification in the pipeline.
     """
     traceId: uuid.UUID
-    mensagemId: uuid.UUID
-    conteudoMensagem: str
-    tipoNotificacao: str
+    messageId: uuid.UUID
+    contentMessage: str
+    typeNotification: str
     status: str

@@ -1,10 +1,10 @@
 """
-Módulo principal da API FastAPI para o sistema de notificação assíncrona.
+Main module of the FastAPI API for the asynchronous notification system.
 
-Este módulo define os endpoints HTTP para o envio e consulta de notificações.
-Ele atua como o ponto de entrada da aplicação, gerenciando o ciclo de vida
-da conexão com o RabbitMQ e roteando as requisições de notificação para
-o pipeline de mensageria.
+This module defines the HTTP endpoints for sending and querying notifications.
+It acts as the application's entry point, managing the lifecycle
+of the connection to RabbitMQ and routing notification requests to
+the messaging pipeline.
 """
 
 import json
@@ -13,82 +13,82 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from typing import Dict, Any
 from .rabbitmq_service import ServiceRabbitMQ
-from .models import NotificacaoPayload
+from .models import NotificationPayload
 from .persistence import notification_status_create, notification_status_get
 
 service_rabbitmq = ServiceRabbitMQ()
 
-db_em_memoria: Dict[uuid.UUID, Any] = {}
+db_in_memory: Dict[uuid.UUID, Any] = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Gerenciador do ciclo de vida da aplicação.
+    Application lifecycle manager.
 
-    Estabelece e encerra a conexão com o RabbitMQ quando a aplicação
-    é iniciada e encerrada, garantindo que os recursos sejam
-    gerenciados corretamente.
+    Establishes and terminates the connection with RabbitMQ when the application
+    is started and terminated, ensuring that resources are
+    managed correctly.
     """
-    print("Aplicação iniciando...")
+    print("Application starting...")
     await service_rabbitmq.connect()
     yield
-    print("Aplicação encerrando...")
+    print("Application closing...")
     await service_rabbitmq.close()
 
 app = FastAPI(lifespan=lifespan)
 
-@app.post("/api/notificar", status_code=202)
-async def notificar(payload: NotificacaoPayload):
+@app.post("/api/notify", status_code=202)
+async def notify(payload: NotificationPayload):
     """
-    Endpoint para o envio de uma nova notificação.
+    Endpoint for sending a new notification.
 
-    - **Recebe:** um payload JSON com 'mensagemId', 'conteudoMensagem' e 'tipoNotificacao'.
-    - **Valida:** o payload automaticamente com o modelo Pydantic 'NotificacaoPayload'.
-    - **Gera:** um 'traceId' único para rastreamento.
-    - **Persiste:** o status inicial ('RECEBIDO') da notificação em memória.
-    - **Publica:** a mensagem em formato JSON na fila de entrada do RabbitMQ.
-    - **Retorna:** um status 202 (Accepted) com 'traceId' e 'mensagemId', indicando
-      que o processamento será realizado de forma assíncrona.
+    - Receives: a JSON payload with ‘messageId’, ‘contentMessage’, and ‘typeNotification’.
+    - Validates: the payload automatically with the Pydantic ‘notificationPayload’ model.
+    - Generates: a unique ‘traceId’ for tracking.
+    - Persists: the initial status (‘RECEIVED’) of the notification in memory.
+    - Publishes: the message in JSON format to the RabbitMQ entry queue.
+    - Returns:** a 202 (Accepted) status with ‘traceId’ and ‘messageId’, indicating
+      that processing will be performed asynchronously.
     """
     trace_id = uuid.uuid4()
 
-    notificacao_status = {
+    notification_status = {
         "traceId": trace_id,
-        "mensagemId": payload.mensagemId,
-        "conteudoMensagem": payload.conteudoMensagem,
-        "tipoNotificacao": payload.tipoNotificacao,
-        "status": "RECEBIDO"
+        "messageId": payload.messageId,
+        "contentMessage": payload.contentMessage,
+        "typeNotification": payload.typeNotification,
+        "status": "RECEIVED"
     }
 
-    notification_status_create(notificacao_status)
+    notification_status_create(notification_status)
 
     rabbitmq_payload = {
         "traceId": str(trace_id),
-        "mensagemId": str(payload.mensagemId),
-        "conteudoMensagem": payload.conteudoMensagem,
-        "tipoNotificacao": payload.tipoNotificacao,
+        "messageId": str(payload.messageId),
+        "contentMessage": payload.contentMessage,
+        "typeNotification": payload.typeNotification,
     }
 
-    fila_entrada = "fila.notificacao.entrada.ELIEZER"
-    await service_rabbitmq.publish_message(fila_entrada, json.dumps(rabbitmq_payload))
+    fila_entry = "fila.notification.entry.NAME"
+    await service_rabbitmq.publish_message(fila_entry, json.dumps(rabbitmq_payload))
 
     return {
-        "mensagemId": payload.mensagemId,
+        "messageId": payload.messageId,
         "traceId": trace_id,
-        "status": "Requisição recebida e executada de forma assíncrona."
+        "status": "Request received and executed asynchronously."
     }
 
-@app.get("/api/notificacao/status/{traceId}")
-async def get_notificacao_status(traceId: uuid.UUID):
+@app.get("/api/notification/status/{traceId}")
+async def get_notification_status(traceId: uuid.UUID):
     """
-    Endpoint para consultar o status de uma notificação.
+    Endpoint to query the status of a notification.
 
-    - **Recebe:** um 'traceId' na URL.
-    - **Busca:** o status mais recente da notificação na estrutura de dados em memória.
-    - **Retorna:** os dados completos da notificação se encontrados.
-    - **Levanta:** uma exceção HTTP 404 (Not Found) se o 'traceId' não existir.
+    - Receives: a ‘traceId’ in the URL.
+    - Searches: the most recent status of the notification in the in-memory data structure.
+    - Returns: the complete notification data if found.
+    - Raises: an HTTP 404 (Not Found) exception if the ‘traceId’ does not exist.
     """
     status_data = notification_status_get(traceId)
     if not status_data:
-        raise HTTPException(status_code=404, detail="Notificação não encontrada.")
+        raise HTTPException(status_code=404, detail="Notification not found.")
     return status_data

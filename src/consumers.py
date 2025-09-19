@@ -1,10 +1,10 @@
 """
-Módulo de consumidores para o sistema de notificação assíncrona.
+Consumer module for the asynchronous notification system.
 
-Este script é responsável por iniciar e gerenciar todos os consumidores do
-pipeline de mensagens do RabbitMQ. Ele estabelece uma conexão, declara
-as filas e inicia o consumo de mensagens de forma assíncrona, de acordo
-com as diferentes etapas do fluxo de trabalho.
+This script is responsible for starting and managing all consumers in the
+RabbitMQ message pipeline. It establishes a connection, declares the
+QUEUES, and starts consuming messages asynchronously, according to the
+different stages of the workflow.
 """
 
 import asyncio
@@ -16,82 +16,82 @@ load_dotenv()
 
 RABBITMQ_URL = os.getenv("RABBITMQ_URL")
 
-FILAS = {
-    "entrada": "entrada",
-    "validacao": "validacao",
+QUEUES = {
+    "entry": "entry",
+    "validation": "validation",
     "retry": "retry",
     "dlq": "dlq",
 }
 
-async def entrada_process_message(message: aio_pika.IncomingMessage):
+async def entry_process_message(message: aio_pika.IncomingMessage):
     """
-    Callback para o consumidor da fila de entrada.
+    Callback to the consumer of the entry queue.
 
-    Processa mensagens recebidas da fila de entrada, simulando
-    a primeira etapa de processamento.
+    Processes messages received from the entry queue, simulating
+    the first stage of processing.
     """
     async with message.process():
-        print(f"[entrada] Recebido: {message.body.decode()}")
+        print(f"[entry] Received: {message.body.decode()}")
 
-async def validacao_process_message(message: aio_pika.IncomingMessage):
+async def validation_process_message(message: aio_pika.IncomingMessage):
     """
-    Callback para o consumidor da fila de validação.
+    Callback to the consumer of the validation queue.
 
-    Processa mensagens que passaram pela etapa inicial e aguardam
-    validação ou envio final.
+    Processes messages that have passed the initial stage and are awaiting
+    validation or final delivery.
     """
     async with message.process():
-        print(f"[validacao] Recebido: {message.body.decode()}")
+        print(f"[validation] Received: {message.body.decode()}")
 
 async def retry_process_message(message: aio_pika.IncomingMessage):
     """
-    Callback para o consumidor da fila de reprocessamento.
+    Callback for the reprocessing queue consumer.
 
-    Recebe mensagens que falharam na etapa inicial e tenta reprocessá-las.
+    Receives messages that failed in the initial stage and attempts to reprocess them.
     """
     async with message.process():
-        print(f"[retry] Recebido: {message.body.decode()}")
+        print(f"[retry] Received: {message.body.decode()}")
 
 async def dlq_process_message(message: aio_pika.IncomingMessage):
     """
-    Callback para o consumidor da Dead Letter Queue (DLQ).
+    Callback for the Dead Letter Queue (DLQ) consumer.
 
-    Recebe mensagens que falharam após todas as tentativas de
-    reprocessamento e as marca como finalizadas (sem processamento posterior).
+    Receives messages that failed after all reprocessing attempts
+    and marks them as finished (no further processing).
     """
     async with message.process():
-        print(f"[dlq] Recebido: {message.body.decode()}")
+        print(f"[dlq] Received: {message.body.decode()}")
 
 async def start_consumers():
     """
-    Função principal que inicia e gerencia o ciclo de vida dos consumidores.
+    Main function that starts and manages the consumer lifecycle.
 
-    - Estabelece uma conexão robusta com o RabbitMQ.
-    - Declara todas as filas necessárias para o pipeline.
-    - Inicia o consumo assíncrono de mensagens em todas as filas.
-    - Mantém a aplicação rodando indefinidamente.
+    - Establishes a robust connection with RabbitMQ.
+    - Declares all queues needed for the pipeline.
+    - Starts asynchronous message consumption on all queues.
+    - Keeps the application running indefinitely.
     """
     connection = await aio_pika.connect_robust(RABBITMQ_URL)
-    print("Conexão do RabbitMQ estabelecida.")
+    print("RabbitMQ connection established.")
 
     async with connection:
         channel = await connection.channel()
 
-        queue_entrada = await channel.declare_queue(FILAS["entrada"], durable=True)
-        queue_validacao = await channel.declare_queue(FILAS["validacao"], durable=True)
-        queue_retry = await channel.declare_queue(FILAS["retry"], durable=True)
-        queue_dlq = await channel.declare_queue(FILAS["dlq"], durable=True)
+        queue_entry = await channel.declare_queue(QUEUES["entry"], durable=True)
+        queue_validation = await channel.declare_queue(QUEUES["validation"], durable=True)
+        queue_retry = await channel.declare_queue(QUEUES["retry"], durable=True)
+        queue_dlq = await channel.declare_queue(QUEUES["dlq"], durable=True)
 
-        print("Filas do RabbitMQ declaradas. Iniciando consumidores...")
+        print("RabbitMQ queues declared. Starting consumers...")
 
         await asyncio.gather(
-            queue_entrada.consume(entrada_process_message),
-            queue_validacao.consume(validacao_process_message),
+            queue_entry.consume(entry_process_message),
+            queue_validation.consume(validation_process_message),
             queue_retry.consume(retry_process_message),
             queue_dlq.consume(dlq_process_message),
         )
 
-        print("Consumidores em execução. Aguardando mensagens...")
+        print("Consumers running. Waiting for messages...")
 
         await asyncio.Future()
 
@@ -99,4 +99,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(start_consumers())
     except KeyboardInterrupt:
-        print("Encerrando consumidores...")
+        print("Closing consumers...")

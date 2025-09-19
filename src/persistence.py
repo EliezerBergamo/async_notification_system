@@ -1,51 +1,51 @@
 """
-Módulo de persistência de dados em memória.
+In-memory data persistence module.
 
-Este módulo gerencia o estado das notificações usando uma estrutura de dados
-em memória (um dicionário Python). As funções aqui permitem a criação,
-atualização e consulta do status das notificações com base em seu traceId,
-simulando um armazenamento de dados para fins de rastreamento.
+This module manages the status of notifications using an in-memory data structure
+(a Python dictionary). The functions here allow the creation,
+updating, and querying of notification status based on their traceId,
+simulating data storage for tracking purposes.
 """
 
 from typing import Dict, Any
 from uuid import UUID
 
-db_em_memoria: Dict[UUID, Any] = {}
+db_in_memory: Dict[UUID, Any] = {}
 
 def notification_status_create(data: dict):
     """
-    Cria e armazena o status inicial de uma notificação.
+    Creates and stores the initial status of a notification.
 
     Args:
-        data (dict): Dicionário contendo os dados da notificação,
-                     incluindo o traceId.
+        data (dict): Dictionary containing the notification data,
+                     including the traceId.
     """
     trace_id = data.get("traceId")
     if trace_id:
-        db_em_memoria[trace_id] = data
-        print(f"Status inicial da notificação {trace_id} criado: RECEBIDO")
+        db_in_memory[trace_id] = data
+        print(f"Initial notification status {trace_id} created: RECEIVED")
 
 def notification_status_update(trace_id: UUID, new_status: str):
     """
-    Atualiza o status de uma notificação existente.
+    Updates the status of an existing notification.
 
     Args:
-        trace_id (UUID): O UUID da notificação a ser atualizada.
-        new_status (str): O novo status a ser atribuído (e.g., "PROCESSADO_INTERMEDIARIO").
+        trace_id (UUID): The UUID of the notification to be updated.
+        new_status (str): The new status to be assigned (e.g., “PROCESSED_INTERMEDIATE”).
     """
-    if trace_id in db_em_memoria:
-        db_em_memoria[trace_id]['status'] = new_status
-        print(f"Status da notificação {trace_id} atualizado para: {new_status}")
+    if trace_id in db_in_memory:
+        db_in_memory[trace_id]['status'] = new_status
+        print(f"Notification status {trace_id} updated to: {new_status}")
 
 def notification_status_get(trace_id: UUID):
     """
-    Retorna os dados completos do status de uma notificação.
+    Returns the complete status data for a notification.
 
     Args:
-        trace_id (UUID): O UUID da notificação a ser consultada.
+        trace_id (UUID): The UUID of the notification to be queried.
 
     Returns:
-        Dict[str, Any] | None: O dicionário com os dados da notificação ou
-                              None se o traceId não for encontrado.
+        Dict[str, Any] | None: The dictionary with the notification data or
+                              None if the traceId is not found.
     """
-    return db_em_memoria.get(trace_id)
+    return db_in_memory.get(trace_id)
