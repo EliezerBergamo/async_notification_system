@@ -69,8 +69,8 @@ async def notify(payload: NotificationPayload):
         "typeNotification": payload.typeNotification,
     }
 
-    fila_entry = "fila.notification.entry.NAME"
-    await service_rabbitmq.publish_message(fila_entry, json.dumps(rabbitmq_payload))
+    queue_entry = "queue.notification.entry.NAME"
+    await service_rabbitmq.publish_message(queue_entry, json.dumps(rabbitmq_payload))
 
     return {
         "messageId": payload.messageId,
